@@ -10,7 +10,7 @@ public class Server : GenericServer
 
         AddRoute(Route.Get("/api/test", RouteFired));
     }
-    public void RouteFired(Client client, string Menthod, string Path)
+    public void RouteFired(Client client, string Method, string Path)
     {
         Console.WriteLine($"Route fired by {client.IP}");
         _ = client.RespondStatic("daxpfp.png");
