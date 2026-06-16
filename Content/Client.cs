@@ -55,11 +55,24 @@ public class Client
     public async Task RespondStatic() => await RespondStatic(Path!);
     public async Task RespondStatic(string path)
     {
+        string root = System.IO.Path.GetFullPath("wwwroot");
+
+        string combined = path[0] == '/' ? System.IO.Path.Combine(root, path.TrimStart('/')) : System.IO.Path.Combine(root, Path!, path);
+        string fullpath = System.IO.Path.GetFullPath(combined);
+
+        if (!fullpath.StartsWith(root + System.IO.Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+        {
+            await Respond404();
+            return;
+        }
+
+        path = System.IO.Path.Combine("wwwroot", path.TrimStart('/'));
+        
         string? file = GetFileName(path);
 
         if (file == null)
         {
-            await Stream!.WriteAsync(Encoding.UTF8.GetBytes("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n"));
+            await Respond404();
             return;
         }
         string contentType = GetContentType(file);
@@ -187,21 +200,20 @@ public class Client
             _ => "application/octet-stream"
         };
     }
-    public static string GetFileName(string path)
+    public static string? GetFileName(string path)
     {
-        if (File.Exists($"wwwroot/{path}"))
-            return $"wwwroot/{path}";
-        else if (File.Exists($"wwwroot/{path}.html"))
-            return $"wwwroot/{path}.html";
-        else if (File.Exists($"wwwroot/{path}/index.html"))
-            return $"wwwroot/{path}/index.html";
-        
-        return null!;
+        if (File.Exists(path))
+            return path;
+        else if (File.Exists($"{path}.html"))
+            return $"{path}.html";
+        else if (File.Exists($"{path}/index.html"))
+            return $"{path}/index.html";
+        return null;
     }
     public bool IsRequestType(string type)
     {
         if (Headers == null) return false;
-        if (Headers!.TryGetValue("Accept", out string? accept)) return false;
-        return accept!.Contains(type);
+        if (!Headers.TryGetValue("Accept", out string? accept)) return false;
+        return accept.Contains(type);
     }
 }

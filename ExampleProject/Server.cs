@@ -26,7 +26,10 @@ public class Server : GenericServer
         await ApplyRoutes(client);
         if (client.RouteMatched) return;
 
-        await client.RespondStatic();
+        if (client.IsRequestType("text/html"))
+            await client.RespondStatic("/index.html");
+        else
+            await client.RespondStatic();
     }
     public async Task OnClose(Client client)
     {
