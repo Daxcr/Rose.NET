@@ -7,6 +7,13 @@ public class Server : GenericServer
         OnClientConnect += OnConnection;
         OnClientRequest += OnRequest;
         OnClientClose += OnClose;
+
+        AddRoute(Route.Get("/api/test", RouteFired));
+    }
+    public void RouteFired(Client client, string Menthod, string Path)
+    {
+        Console.WriteLine($"Route fired by {client.IP}");
+        _ = client.RespondStatic("daxpfp.png");
     }
     public void OnConnection(Client client)
     {
@@ -15,6 +22,10 @@ public class Server : GenericServer
     public void OnRequest(Client client)
     {
         Console.WriteLine($"Request from {client.IP}: {client.Method} {client.Path} {client.Version}");
+
+        ApplyRoutes(client);
+        if (client.RouteMatched) return;
+
         if (client.IsRequestType("text/html"))
             _ = client.RespondStatic("index.html");
         else

@@ -30,6 +30,20 @@ public class GenericServer
     public event Action<Client>? OnClientConnect;
     public event Action<Client>? OnClientRequest;
     public event Action<Client>? OnClientClose;
+    public Dictionary<string, Route> Routes = new();
+    public bool RouteMatched { get; internal set; } = false;
+    public void AddRoute(Route route)
+    {
+        Routes.Add(route.Path, route);
+    }
+    public void ApplyRoutes(Client client)
+    {
+        if (Routes.TryGetValue(client.Path!, out Route route) && route.Enabled && route.Method == client.Method)
+        {
+            client.RouteMatched = true;
+            route.OnFire?.Invoke(client, client.Method, client.Path!);
+        }
+    }
     public async Task Run()
     {
         while (AcceptingConnections)
@@ -68,7 +82,7 @@ public class GenericServer
                                 return;
                             }
                         }
-                
+                        client.RouteMatched = false;
                         client.Request = request;
                         OnClientRequest?.Invoke(client);
                     }
