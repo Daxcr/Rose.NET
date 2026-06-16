@@ -1,6 +1,4 @@
-﻿using Rose.Net;
-
-Server server = new Server
+﻿Server server = new Server
 {
     Port = 5555,
     Host = "127.0.0.1",

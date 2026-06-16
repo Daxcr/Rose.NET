@@ -10,28 +10,25 @@ public class Server : GenericServer
 
         AddRoute(Route.Get("/api/test", RouteFired));
     }
-    public void RouteFired(Client client, string Method, string Path)
+    public async Task RouteFired(Client client, string Method, string Path)
     {
         Console.WriteLine($"Route fired by {client.IP}");
-        _ = client.RespondStatic("daxpfp.png");
+        await client.Respond302("https://dax.cr/");
     }
-    public void OnConnection(Client client)
+    public async Task OnConnection(Client client)
     {
         Console.WriteLine($"Connection from {client.IP}");
     }
-    public void OnRequest(Client client)
+    public async Task OnRequest(Client client)
     {
         Console.WriteLine($"Request from {client.IP}: {client.Method} {client.Path} {client.Version}");
 
-        ApplyRoutes(client);
+        await ApplyRoutes(client);
         if (client.RouteMatched) return;
 
-        if (client.IsRequestType("text/html"))
-            _ = client.RespondStatic("index.html");
-        else
-            _ = client.RespondStatic();
+        await client.RespondStatic();
     }
-    public void OnClose(Client client)
+    public async Task OnClose(Client client)
     {
         Console.WriteLine($"Client {client.IP} has expired");
     }

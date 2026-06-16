@@ -27,21 +27,22 @@ public class GenericServer
     public Task? Runtime;
     IPAddress? Ip;
     TcpListener? Listener;
-    public event Action<Client>? OnClientConnect;
-    public event Action<Client>? OnClientRequest;
-    public event Action<Client>? OnClientClose;
+    public event Func<Client, Task>? OnClientConnect;
+    public event Func<Client, Task>? OnClientRequest;
+    public event Func<Client, Task>? OnClientClose;
     public Dictionary<string, Route> Routes = new();
     public bool RouteMatched { get; internal set; } = false;
     public void AddRoute(Route route)
     {
-        Routes.Add(route.Path, route);
+        Routes.Add($"{route.Path}{route.Method}", route);
     }
-    public void ApplyRoutes(Client client)
+    public async Task ApplyRoutes(Client client)
     {
-        if (Routes.TryGetValue(client.Path!, out Route route) && route.Enabled && route.Method == client.Method)
+        if (Routes.TryGetValue($"{client.Path}{client.Method}", out Route route) && route.Enabled)
         {
             client.RouteMatched = true;
-            route.OnFire?.Invoke(client, client.Method, client.Path!);
+            if (route.OnFire != null)
+                await route.OnFire.Invoke(client, client.Method!, client.Path!);
         }
     }
     public async Task Run()
@@ -53,7 +54,7 @@ public class GenericServer
             {
                 Client client = new Client(tcpClient);
                 client.Parent = this;
-                OnClientConnect?.Invoke(client);
+                await OnClientConnect?.Invoke(client)!;
 
                 NetworkStream stream = tcpClient.GetStream();
                 client.Stream = stream;
@@ -84,12 +85,12 @@ public class GenericServer
                         }
                         client.RouteMatched = false;
                         client.Request = request;
-                        OnClientRequest?.Invoke(client);
+                        await OnClientRequest?.Invoke(client)!;
                     }
 
                 } catch { } finally
                 {
-                    OnClientClose?.Invoke(client);
+                    await OnClientClose?.Invoke(client)!;
                 }
             });
         }
