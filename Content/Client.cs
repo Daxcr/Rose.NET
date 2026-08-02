@@ -11,10 +11,11 @@ public class Client
     public string? Method;
     public string? Version;
     public Dictionary<string, string>? Headers;
+    public Dictionary<string, string>? QueryParameters;
     public string? Body;
     public string IP;
     public GenericServer? Parent;
-    public NetworkStream? Stream;
+    internal NetworkStream? Stream;
     public bool RouteMatched { get; internal set; } = false;
     public string? Request
     {
@@ -49,6 +50,21 @@ public class Client
         }
 
         Body = index + 1 < lines.Length ? string.Join("\r\n", lines[(index + 1)..]) : "";
+        QueryParameters = new Dictionary<string, string>();
+        int queryIndex = Path.IndexOf('?');
+        if (queryIndex >= 0)
+        {
+            string queryString = Path[(queryIndex + 1)..];
+            Path = Path[..queryIndex];
+
+            foreach (string pair in queryString.Split('&', StringSplitOptions.RemoveEmptyEntries))
+            {
+                string[] keyvalue = pair.Split('=', 2);
+                string key = Uri.UnescapeDataString(keyvalue[0]);
+                string value = keyvalue.Length > 1 ? Uri.UnescapeDataString(keyvalue[1].Replace("+", " ")) : "";
+                QueryParameters[key] = value;
+            }
+        }
     }
     public void Close() => Socket.Close();
 
@@ -56,30 +72,40 @@ public class Client
     public async Task RespondStatic(string path)
     {
         string root = System.IO.Path.GetFullPath("wwwroot");
-
         string combined = path[0] == '/' ? System.IO.Path.Combine(root, path.TrimStart('/')) : System.IO.Path.Combine(root, Path!, path);
+
         string fullpath = System.IO.Path.GetFullPath(combined);
 
-        if (!fullpath.StartsWith(root + System.IO.Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+        if (!fullpath.StartsWith(root + System.IO.Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && !fullpath.Equals(root, StringComparison.OrdinalIgnoreCase))
         {
             await Respond404();
             return;
         }
 
-        path = System.IO.Path.Combine("wwwroot", path.TrimStart('/'));
-        
-        string? file = GetFileName(path);
+        if (Directory.Exists(fullpath))
+        {
+            string[] indexFiles = ["index.html", "index.htm", "default.html"];
+            string? indexFile = indexFiles.Select(file => System.IO.Path.Combine(fullpath, file)).FirstOrDefault(File.Exists);
 
-        if (file == null)
+            if (indexFile == null)
+            {
+                await Respond404();
+                return;
+            }
+
+            fullpath = indexFile;
+        }
+
+        if (!File.Exists(fullpath))
         {
             await Respond404();
             return;
         }
-        string contentType = GetContentType(file);
-        string headers = $"HTTP/1.1 200 OK\r\nContent-Type: {contentType}\r\nContent-Length: {new FileInfo(file).Length}\r\n\r\n";
 
+        string contentType = GetContentType(fullpath);
+        string headers = $"HTTP/1.1 200 OK\r\nContent-Type: {contentType}\r\nContent-Length: {new FileInfo(fullpath).Length}\r\n\r\n";
         await Stream!.WriteAsync(Encoding.UTF8.GetBytes(headers));
-        using FileStream filestream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
+        using FileStream filestream = new FileStream(fullpath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
         await filestream.CopyToAsync(Stream!);
     }
     public async Task Respond200(string body = "", string contentType = "text/html") => await RespondWithBody(200, "OK", body, contentType);

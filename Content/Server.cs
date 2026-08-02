@@ -24,7 +24,7 @@ public class GenericServer
             } else if (Listener != null) Listener.Stop();
         }
     }
-    public Task? Runtime;
+    internal Task? Runtime;
     IPAddress? Ip;
     TcpListener? Listener;
     public event Func<Client, Task>? OnClientConnect;
@@ -42,7 +42,7 @@ public class GenericServer
         {
             client.RouteMatched = true;
             if (route.OnFire != null)
-                await route.OnFire.Invoke(client, client.Method!, client.Path!);
+                await route.OnFire.Invoke(client);
         }
     }
     public async Task Run()
