@@ -8,9 +8,9 @@ public class Server : GenericServer
         OnClientRequest += OnRequest;
         OnClientClose += OnClose;
 
-        AddRoute(Route.Get("/api/test", RouteFired));
+        AddRoute(Route.Get("/api/test", TestAPI));
     }
-    public async Task RouteFired(Client client, string Method, string Path)
+    public async Task TestAPI(Client client)
     {
         Console.WriteLine($"Route fired by {client.IP}");
         await client.Respond302("https://dax.cr/");
@@ -26,10 +26,7 @@ public class Server : GenericServer
         await ApplyRoutes(client);
         if (client.RouteMatched) return;
 
-        if (client.IsRequestType("text/html"))
-            await client.RespondStatic("/index.html");
-        else
-            await client.RespondStatic();
+        await client.RespondStatic();
     }
     public async Task OnClose(Client client)
     {
