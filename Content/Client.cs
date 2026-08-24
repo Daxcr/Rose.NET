@@ -6,16 +6,23 @@ namespace Rose.Net;
 
 public class Client
 {
-    TcpClient Socket;
+    internal TcpClient Socket;
+    /// <summary>Requested path, ie "/resources/site.css".</summary>
     public string? Path;
+    /// <summary>HTTP Method, ie GET/POST/PUT/etc.</summary>
     public string? Method;
+    /// <summary>HTTP Version.</summary>
     public string? Version;
+    /// <summary>HTTP Headers.</summary>
     public Dictionary<string, string>? Headers;
+    /// <summary>URL Query parameters (those things after a question mark in a url).</summary>
     public Dictionary<string, string>? QueryParameters;
     public string? Body;
+    /// <summary>The IP address of the connected client</summary>
     public string IP;
     public GenericServer? Parent;
     internal NetworkStream? Stream;
+    /// <summary>Whether a route was matched. Note: A route match doesn't automatically stop OnClientRequest from finishing, which is why this variable exists.</summary>
     public bool RouteMatched { get; internal set; } = false;
     public string? Request
     {
@@ -31,7 +38,7 @@ public class Client
         this.Socket = Socket;
         IP = ((IPEndPoint)Socket.Client.RemoteEndPoint!).Address.ToString();
     }
-    public void RequestRecieved(string request)
+    internal void RequestRecieved(string request)
     {
         string[] lines = request.Split("\r\n");
         string[] parts = lines[0].Split(" ");
@@ -67,8 +74,9 @@ public class Client
         }
     }
     public void Close() => Socket.Close();
-
+    /// <summary>Static file serving (good practice to put at the end of your OnRequestReceived event).</summary>
     public async Task RespondStatic() => await RespondStatic(Path!);
+    /// <summary>Static file serving (good practice to put at the end of your OnRequestReceived event).</summary>
     public async Task RespondStatic(string path)
     {
         string root = System.IO.Path.GetFullPath("wwwroot");

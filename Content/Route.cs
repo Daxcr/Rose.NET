@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Rose.Net;
 
 public struct Route
@@ -26,4 +28,10 @@ public struct Route
     public static Route Options(string Path, Func<Client, Task> Handler) => Make("OPTIONS", Path, Handler);
     public static Route Connect(string Path, Func<Client, Task> Handler) => Make("CONNECT", Path, Handler);
     public static Route Trace(string Path, Func<Client, Task> Handler) => Make("TRACE", Path, Handler);
+
+    /// <summary>
+    /// Note: QUERY is fairly new and not widely adopted yet. Use with caution.
+    /// </summary>
+    [Obsolete("QUERY is fairly new and not widely adopted yet. Use with caution.")]
+    public static Route Query(string Path, Func<Client, Task> Handler) => Make("QUERY", Path, Handler);
 }

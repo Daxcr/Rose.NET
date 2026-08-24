@@ -30,19 +30,29 @@ public class GenericServer
     internal Task? Runtime;
     IPAddress? Ip;
     TcpListener? Listener;
+    /// <summary>When a client first connects, this fires.</summary>
     public event Func<Client, Task>? OnClientConnect;
+    /// <summary>Once a client's request is parsed, this fires.</summary>
     public event Func<Client, Task>? OnClientRequest;
+    /// <summary>After a connection is closed, this fires.</summary>
     public event Func<Client, Task>? OnClientClose;
     public Dictionary<string, Route> Routes = new();
+    /// <summary>Middleware added will be required to be called manually. Standard middleware is intended for internal middleware. External libraries should use privileged middleware instead.</summary>
     public List<IMiddleware> StandardMiddleware = new();
+    /// <summary>Middleware added will automatically run before OnClientRequest fires.</summary>
     public List<IPrivileged> PrivilegedMiddleware = new();
-    public bool RouteMatched { get; internal set; } = false;
     public GenericServer(string name = "APP", bool silentInit = false)
     {
         Name = name;
         if (!silentInit)
             Debug.InternalLog($"New Server: {Name}");
     }
+    /// <summary>
+    /// Adds a route. Wildcard supported.
+    /// <para>Example: "/api/users/*/bio" will allow client paths such as "/api/users/dax/bio"</para>
+    /// <para>Example: "/cdn/**" will allow client paths such as "/cdn/files/dax/image.png"</para>
+    /// </summary>
+    /// <param name="route">It is recommended to use Route.Get/Route.Post/etc instead of manually creating a Route object.</param>
     public void AddRoute(Route route)
     {
         Debug.InternalLog($"Added route for {Name}: {route.Path} ({route.Method})");
@@ -66,6 +76,10 @@ public class GenericServer
         }
         Debug.InternalLog($"Added middleware {middleware.GetType()}");
     }
+    /// <summary>
+    /// Applies routes. Note: this does not stop OnClientRequest from firing. Returning if RouteMatched == true is recommended.
+    /// </summary>
+    /// <param name="client">The client, of course.</param>
     public async Task ApplyRoutes(Client client)
     {
         if (Routes.TryGetValue($"{client.Path}{client.Method}", out Route routeA) && routeA.Enabled)
@@ -82,7 +96,7 @@ public class GenericServer
                 continue;
                 
             string[] possible = routeB.Path.TrimEnd('/').Split("/");
-            if (possible[possible.Count() - 1] != "**" || possible.Count() > required.Count())
+            if (possible[possible.Length - 1] != "**" || possible.Length > required.Length)
                 continue;
 
             int index = 0;
@@ -91,7 +105,7 @@ public class GenericServer
                 if (val != possible[index] && possible[index] != "*" && possible[index] != "**")
                     break;
 
-                if (index == possible.Count() - 1 || possible[index] == "**")
+                if (index == possible.Length - 1 || possible[index] == "**")
                 {
                     client.RouteMatched = true;
                     if (routeB.OnFire != null)
@@ -103,7 +117,7 @@ public class GenericServer
             }
         }
     }
-    public async Task Run()
+    internal async Task Run()
     {
         while (AcceptingConnections)
         {
