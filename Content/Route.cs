@@ -7,6 +7,16 @@ public struct Route
     public bool Enabled = true;
     public Func<Client, Task>? OnFire;
     public Route() { }
+    internal static Route Make(string Method, string Path, Func<Client, Task> Handler)
+    {
+        Route route = new Route()
+        {
+            Method = Method,
+            Path = Path
+        };
+        route.OnFire += Handler;
+        return route;
+    }
     public static Route Get(string Path, Func<Client, Task> Handler) => Make("GET", Path, Handler);
     public static Route Post(string Path, Func<Client, Task> Handler) => Make("POST", Path, Handler);
     public static Route Put(string Path, Func<Client, Task> Handler) => Make("PUT", Path, Handler);
@@ -16,13 +26,4 @@ public struct Route
     public static Route Options(string Path, Func<Client, Task> Handler) => Make("OPTIONS", Path, Handler);
     public static Route Connect(string Path, Func<Client, Task> Handler) => Make("CONNECT", Path, Handler);
     public static Route Trace(string Path, Func<Client, Task> Handler) => Make("TRACE", Path, Handler);
-    internal static Route Make(string Method, string Path, Func<Client, Task> Handler)
-    {
-        Route route = new Route(){
-            Method = Method,
-            Path = Path
-        };
-        route.OnFire += Handler;
-        return route;
-    }
 }
