@@ -78,7 +78,7 @@ public class GenericServer
         foreach (Route routeB in Routes.Values)
         {
             if (!routeB.Path.Contains("*"))
-                break;
+                continue;
                 
             string[] required = client.Path!.TrimEnd('/').Split("/");
             string[] possible = routeB.Path.TrimEnd('/').Split("/");
