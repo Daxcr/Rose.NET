@@ -11,6 +11,7 @@ public class Server : GenericServer
         OnClientClose += OnClose;
 
         AddRoute(Route.Get("/api/test", TestAPI));
+        AddRoute(Route.Get("/api/*/helloworld/**", TestAPI));
         AddMiddleware<FixedWindow>();
     }
     public async Task TestAPI(Client client)
