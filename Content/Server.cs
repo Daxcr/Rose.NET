@@ -75,14 +75,14 @@ public class GenericServer
                 await routeA.OnFire.Invoke(client);
             return;
         }
+        string[] required = client.Path!.TrimEnd('/').Split('/');
         foreach (Route routeB in Routes.Values)
         {
-            if (!routeB.Path.Contains("*"))
+            if (!routeB.Path.Contains("*") || routeB.Method != client.Method)
                 continue;
                 
-            string[] required = client.Path!.TrimEnd('/').Split("/");
             string[] possible = routeB.Path.TrimEnd('/').Split("/");
-            if (required.Count() > possible.Count() && (possible[possible.Count() - 1] != "**" || possible.Count() > required.Count()))
+            if (possible[possible.Count() - 1] != "**" || possible.Count() > required.Count())
                 continue;
 
             int index = 0;
