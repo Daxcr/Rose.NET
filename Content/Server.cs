@@ -130,6 +130,8 @@ public class GenericServer
 
                 NetworkStream stream = tcpClient.GetStream();
                 client.Stream = stream;
+                if (PrivilegedMiddleware.Count() > 0)
+                    (PrivilegedMiddleware[0] as IMiddleware)!.Apply(client); 
                 try
                 {
                     while (true)

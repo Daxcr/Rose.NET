@@ -15,14 +15,14 @@ public class Client
     public string? Version;
     /// <summary>HTTP Headers.</summary>
     public Dictionary<string, string>? Headers;
-    /// <summary>URL Query parameters (those things after a question mark in a url).</summary>
+    /// <summary>URL Query parameters (those things after a question mark in a URL).</summary>
     public Dictionary<string, string>? QueryParameters;
     public string? Body;
     /// <summary>The IP address of the connected client</summary>
     public string IP;
     public GenericServer? Parent;
     internal NetworkStream? Stream;
-    /// <summary>Whether a route was matched. Note: A route match doesn't automatically stop OnClientRequest from finishing, which is why this variable exists.</summary>
+    /// <summary>Whether a route was matched or not. Note: A route match doesn't automatically stop OnClientRequest from finishing, which is why this variable exists.</summary>
     public bool RouteMatched { get; internal set; } = false;
     public string? Request
     {
@@ -73,6 +73,7 @@ public class Client
             }
         }
     }
+    /// <summary>Kill a connection early.</summary>
     public void Close() => Socket.Close();
     /// <summary>Static file serving (good practice to put at the end of your OnRequestReceived event).</summary>
     public async Task RespondStatic() => await RespondStatic(Path!);
